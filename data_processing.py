@@ -8,6 +8,8 @@ print(df.head())
 
 # drop unnecessary columns
 
+df.drop(columns=["flight_id"], inplace = True)
+
 # clean and standardize columns
 
 # normalize categorical columns
