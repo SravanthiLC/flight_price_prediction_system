@@ -1,5 +1,7 @@
 Check if python is installed
-```python3 --version```
+```bash
+python3 --version
+```
 if not installed, execute this
 ```sudo apt update && sudo apt install -y python3 python3-pip```
 
