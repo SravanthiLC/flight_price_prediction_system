@@ -16,31 +16,33 @@ X_train, X_test, y_train, y_test = train_test_split(
     test_size = 0.2,
     random_state = 42
 )
+def linear_regression():
+    # create the preprocessing pipeline
+    lr_preprocessor = create_preprocessor(X_train)
 
-# create the preprocessing pipeline
-lr_preprocessor = create_preprocessor(X_train)
+    # build the pipeline
+    lr_model = Pipeline(
+        steps = [
+            ("preprocessor", lr_preprocessor),
+            ("regressor", LinearRegression())
+        ]
+    )
 
-# build the pipeline
-lr_model = Pipeline(
-    steps = [
-        ("preprocessor", lr_preprocessor),
-        ("regressor", LinearRegression())
-    ]
-)
+    # fit the model : the model learns the relationship between the flight features and the ticket price
+    lr_model.fit(X_train, y_train)
 
-# fit the model : the model learns the relationship between the flight features and the ticket price
-lr_model.fit(X_train, y_train)
+    # make predictions
+    y_pred = lr_model.predict(X_test)
 
-# make predictions
-y_pred = lr_model.predict(X_test)
+    # evaluate the model
+    lr_mae = mean_absolute_error(y_test, y_pred)
+    lr_rmse = root_mean_squared_error(y_test, y_pred)
+    lr_r2 = r2_score(y_test, y_pred)
 
-# evaluate the model
-lr_mae = mean_absolute_error(y_test, y_pred)
-lr_rmse = root_mean_squared_error(y_test, y_pred)
-lr_r2 = r2_score(y_test, y_pred)
+    # display results
+    print("Linear Regression Results:")
+    print(f"Mean Absolute Error : {lr_mae:.2f}")
+    print(f"Root Mean Squared Error : {lr_rmse:.2f}")
+    print(f"R2 Score : {lr_r2:.2f}")
 
-# display results
-print("Linear Regression Results:")
-print(f"Mean Absolute Error : {lr_mae:.2f}")
-print(f"Root Mean Squared Error : {lr_rmse:.2f}")
-print(f"R2 Score : {lr_r2:.2f}")
+linear_regression()
