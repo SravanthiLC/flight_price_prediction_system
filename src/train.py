@@ -58,7 +58,7 @@ def linear_regression():
 def random_forest():
     print("\nRANDOM FOREST REGRESSOR")
     # create the preprocessing pipeline
-    rf_preprocessor = create_preprocessor(X_train)
+    rf_preprocessor = create_preprocessor(X_train, scale_numeric = False)
 
     # build the pipeline
     rf_pipeline = Pipeline(

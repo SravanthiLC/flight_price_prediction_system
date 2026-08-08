@@ -29,10 +29,13 @@ def get_features_and_target(df):
 
     return X, y
 
-def create_preprocessor(X):
+def create_preprocessor(X, scale_numeric = True):
     """
     Create a peprocessing pipeline.
     Treat categorical and numerical features differently.
+    Parameters:
+        True -> apply StandardScaler to numerical features
+        False -> leave numerical columns unchanged
     """
 
     categorical_features = X.select_dtypes(include=["object", "string"]).columns.tolist()
@@ -41,8 +44,10 @@ def create_preprocessor(X):
     # one hot encoder for categorical columns
     categorical_transformer = OneHotEncoder(handle_unknown = "ignore")
 
-    # standard scaler for numerical columns
-    numerical_transformer = StandardScaler()
+    if scale_numeric:
+        numerical_transformer = StandardScaler()
+    else:
+        numerical_transformer = "passthrough"
 
     # apply transformations
     preprocessor = ColumnTransformer(
