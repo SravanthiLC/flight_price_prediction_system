@@ -7,6 +7,8 @@ from sklearn.metrics import mean_absolute_error, root_mean_squared_error, r2_sco
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV
 
+from xgboost import XGBRegressor
+
 # load the cleaned dataset
 df = load_data()
 
@@ -116,5 +118,68 @@ def random_forest():
     # Root Mean Squared Error : 3404.88
     # R2 Score : 0.66
 
-linear_regression()
-random_forest()
+def xgboost_regression():
+    """
+    Train and evaluate an XGBoost Regressor using GridSearchCV to find the best hyperparameters.
+    """
+
+    print("\nXGBOOST")
+
+    # preprocessing pipeline
+    # xgboost is a tree based algorithm, so it does not need numerical scaling
+    xgb_preprocessor = create_preprocessor(X_train, scale_numeric = False)
+
+    xgb_pipeline = Pipeline(
+        steps = [
+            ("preprocessor", xgb_preprocessor),
+            ("regressor", XGBRegressor(
+                objective = "reg:squarederror",
+                random_state = 42,
+                n_jobs = -1
+            ))
+        ]
+    )
+
+    # hyperparameter grid
+    xgb_param_grid  = {
+        "regressor__n_estimators" : [100, 200],
+        "regressor__learning_rate" : [0.05, 0.1],
+        "regressor__max_depth" : [3, 5],
+        "regressor__subsample" : [0.8, 1.0],
+        "regressor__colsample_bytree" : [0.8, 1.0]
+    }
+
+    # perform grid search
+    xgb_grid_search = GridSearchCV(
+        estimator = xgb_pipeline,
+        param_grid = xgb_param_grid,
+        scoring = "r2",
+        cv = 3,
+        n_jobs = -1,
+        verbose = 1
+    )
+
+    xgb_grid_search.fit(X_train, y_train)
+
+    # best model
+    best_xgb_model = xgb_grid_search.best_estimator_
+
+    print("\nBest XGBoost parameters: ")
+    print(xgb_grid_search.best_params_)
+
+    # make predictions
+    y_pred = best_xgb_model.predict(X_test)
+
+    # evaluate the model
+    xgb_mae = mean_absolute_error(y_test, y_pred)
+    print(f"Mean Absolute Error: {xgb_mae:.2f}")
+    xgb_rmse = root_mean_squared_error(y_test, y_pred)
+    print(f"Root Mean Squared Error: {xgb_rmse:.2f}")
+    xgb_r2 = r2_score(y_test, y_pred)
+    print(f"R2 Sore: {xgb_r2:.2f}")
+    
+
+# linear_regression()
+# random_forest()
+xgboost_regression()
+
