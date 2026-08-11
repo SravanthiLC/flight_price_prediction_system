@@ -1,11 +1,8 @@
-
 import pandas as pd
 from pathlib import Path
 
 # Path to the results file
-
 RESULTS_PATH = Path("results/model_results.csv")
-
 
 def display_results():
     """
@@ -22,14 +19,23 @@ def display_results():
     # Load the results
     results_df = pd.read_csv(RESULTS_PATH)
 
+    # Keep only the expected columns
+    expected_columns = ["Model", "MAE", "RMSE", "R2 Score"]
+    results_df = results_df[expected_columns]
+
+    # Remove completely empty rows
+    results_df = results_df.dropna(how="all")
+
+    # Round values for cleaner display
+    results_df["MAE"] = results_df["MAE"].round(2)
+    results_df["RMSE"] = results_df["RMSE"].round(2)
+    results_df["R2 Score"] = results_df["R2 Score"].round(2)
+
     # Sort by R² Score (higher is better)
     results_df = results_df.sort_values(
         by="R2 Score",
         ascending=False
-    )
-
-    # Reset row numbers after sorting
-    results_df = results_df.reset_index(drop=True)
+    ).reset_index(drop=True)
 
     # Display the comparison table
     print("Flight Price Prediction - Model Comparison")

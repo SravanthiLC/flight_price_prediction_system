@@ -42,6 +42,8 @@ def update_results(model_name, mae, rmse, r2):
 
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
+    expected_columns = ["Model", "MAE", "RMSE", "R2 Score"]
+
     new_result = pd.DataFrame({
         "Model": [model_name],
         "MAE": [mae],
@@ -53,6 +55,12 @@ def update_results(model_name, mae, rmse, r2):
     if RESULTS_FILE.exists():
 
         results_df = pd.read_csv(RESULTS_FILE)
+
+        # Keep only the expected columns
+        results_df = results_df.loc[:, results_df.columns.isin(expected_columns)]
+
+        # Remove completely empty rows
+        results_df = results_df.dropna(how="all")
 
         # Remove previous result for this model
         results_df = results_df[results_df["Model"] != model_name]
@@ -67,12 +75,16 @@ def update_results(model_name, mae, rmse, r2):
         # First model being saved
         results_df = new_result
 
-    # Sort by R² Score
+    # Keep columns in the correct order
+    results_df = results_df[expected_columns]
+
+    # Sort by R² Score (highest is best)
     results_df = results_df.sort_values(
         by="R2 Score",
         ascending=False
-    )
+    ).reset_index(drop=True)
 
+    # Save the clean CSV
     results_df.to_csv(RESULTS_FILE, index=False)
 
     print(f"Results updated: {RESULTS_FILE}")
