@@ -247,8 +247,91 @@ def catboost_regression():
     # Root Mean Squared Error : 3324.41
     # R2 Score : 0.68
 
+def catboost_regression_without_encoding():
+    print("\nCATBOOST (Without encoding)")
+    """
+    Train and evaluate CatBoost Regressor using native categorical handling.
+    """
+    # prepare training and testing data
+    X_train_cat = X_train.copy()
+    X_test_cat = X_test.copy()
+
+    # convert categorical columns to string
+    categorical_features = [
+        "airline",
+        "source_city",
+        "destination_city",
+        "travel_class",
+        "season",
+        "day_of_week",
+        "aircraft_type",
+    ]
+
+    for col in categorical_features:
+        X_train_cat[col] = X_train_cat[col].astype(str)
+        X_test_cat[col] = X_test_cat[col].astype(str)
+
+    # CatBoost expects the column indices of categorical features
+    cat_feature_indices = [
+        X_train_cat.columns.get_loc(col)
+        for col in categorical_features
+    ]
+
+    # create the base CatBoost model
+    cat_base_model = CatBoostRegressor(
+        loss_function="RMSE",
+        random_state=42,
+        verbose=0
+    )
+
+    # hyperparameter grid
+    cat_param_grid = {
+        "iterations": [500, 1000],
+        "learning_rate": [0.03, 0.05, 0.1],
+        "depth": [6, 8],
+        "l2_leaf_reg": [3, 5, 7],
+        "bagging_temperature": [0, 1, 3],
+    }
+
+    # grid search
+    cat_grid_search = GridSearchCV(
+        estimator=cat_base_model,
+        param_grid=cat_param_grid,
+        scoring="r2",
+        cv=3,
+        n_jobs=-1,
+        verbose=3
+    )
+
+    # pass categorial feature indices during training
+    cat_grid_search.fit(
+        X_train_cat,
+        y_train,
+        cat_features = cat_feature_indices
+    )
+
+    # best model
+    best_cat_model = cat_grid_search.best_estimator_
+
+    print("\nBest CatBoost Parameters:")
+    print(grid_search.best_params_)
+
+    # make predictions
+    y_pred = best_cat_model.predict(X_test_cat)
+
+    # evaluate the model
+    cat_mae = mean_absolute_error(y_test, y_pred)
+    cat_rmse = root_mean_squared_error(y_test, y_pred)
+    cat_r2 = r2_score(y_test, y_pred)
+
+    print("\nCatBoost Results:")
+    print(f"Mean Absolute Error : {cat_mae:.2f}")
+    print(f"Root Mean Squared Error : {cat_rmse:.2f}")
+    print(f"R2 Score : {cat_r2:.2f}")
+
 # linear_regression()
 # random_forest()
 # xgboost_regression()
-catboost_regression()
+# catboost_regression()
+catboost_regression_without_encoding()
 
