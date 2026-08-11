@@ -9,6 +9,8 @@ from sklearn.model_selection import GridSearchCV
 
 from xgboost import XGBRegressor
 
+from catboost import CatBoostRegressor
+
 # load the cleaned dataset
 df = load_data()
 
@@ -171,6 +173,7 @@ def xgboost_regression():
     y_pred = best_xgb_model.predict(X_test)
 
     # evaluate the model
+    print("\nXGBoost Results:")
     xgb_mae = mean_absolute_error(y_test, y_pred)
     print(f"Mean Absolute Error: {xgb_mae:.2f}")
     xgb_rmse = root_mean_squared_error(y_test, y_pred)
@@ -178,8 +181,74 @@ def xgboost_regression():
     xgb_r2 = r2_score(y_test, y_pred)
     print(f"R2 Sore: {xgb_r2:.2f}")
     
+def catboost_regression():
+    """
+    Train and evaluate a CatBoost Regressor using GridSearchCV to find the best hyperparameters.
+    """
+    print("\nCATBOOST")
+
+    # CatBoost is a tree based algorithm, so no need to scale numerical features
+
+    cat_preprocessor = create_preprocessor(X_train, scale_numeric = False)
+
+    # build the pipeline
+    cat_pipeline = Pipeline(
+        steps = [
+            ("preprocessor", cat_preprocessor),
+            ("regressor", CatBoostRegressor(
+                random_state = 42,
+                verbose = 0
+            ))
+        ]
+    )
+
+    # define the hyperparameter grid
+
+    cat_param_grid = {
+        "regressor__iterations" : [200, 500],
+        "regressor__learning_rate" : [0.03, 0.1],
+        "regressor__depth" : [4, 6, 8]
+    }
+
+    # perform grid search
+    grid_search = GridSearchCV(
+        estimator=cat_pipeline,
+        param_grid=cat_param_grid,
+        scoring="r2",
+        cv=3,
+        n_jobs=-1,
+        verbose=1
+    )
+
+    grid_search.fit(X_train, y_train)
+
+    # best model
+    best_cat_model = grid_search.best_estimator_
+
+    print("\nBest CatBoost Parameters:")
+    print(grid_search.best_params_)
+
+    # make predictions
+    y_pred = best_cat_model.predict(X_test)
+
+    # evaluate the model
+    cat_mae = mean_absolute_error(y_test, y_pred)
+    cat_rmse = root_mean_squared_error(y_test, y_pred)
+    cat_r2 = r2_score(y_test, y_pred)
+
+    # display results
+    print("\nCatBoost Results:")
+    print(f"Mean Absolute Error : {cat_mae:.2f}")
+    print(f"Root Mean Squared Error : {cat_rmse:.2f}")
+    print(f"R2 Score : {cat_r2:.2f}")
+
+    # CatBoost Results:
+    # Mean Absolute Error : 1292.83
+    # Root Mean Squared Error : 3324.41
+    # R2 Score : 0.68
 
 # linear_regression()
 # random_forest()
-xgboost_regression()
+# xgboost_regression()
+catboost_regression()
 
