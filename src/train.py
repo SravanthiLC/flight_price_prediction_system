@@ -380,9 +380,9 @@ def catboost_regression_without_encoding():
     # R2 Score : 0.68
 
 if __name__ == "__main__":
-    # linear_regression()
-    # random_forest()
-    # xgboost_regression()
-    # catboost_regression()
+    linear_regression()
+    random_forest()
+    xgboost_regression()
+    catboost_regression()
     catboost_regression_without_encoding()
 
