@@ -292,11 +292,25 @@ def catboost_regression_without_encoding():
     X_train_cat = X_train.copy()
     X_test_cat = X_test.copy()
 
+    # create route feature
+    X_train_cat["route"] = (
+        X_train_cat["source_city"].astype(str)
+        + "_"
+        + X_train_cat["destination_city"].astype(str)
+    )
+
+    X_test_cat["route"] = (
+        X_test_cat["source_city"].astype(str)
+        + "_"
+        + X_test_cat["destination_city"].astype(str)
+    )
+
     # categorical columns
     categorical_features = [
         "airline",
         "source_city",
         "destination_city",
+        "route",
         "travel_class",
         "season",
         "day_of_week",
@@ -314,47 +328,32 @@ def catboost_regression_without_encoding():
         for col in categorical_features
     ]
 
-    # base model
-    cat_model = CatBoostRegressor(
-        loss_function = "RMSE",
-        random_state = 42,
-        verbose = 2
-    )
-
-    # parameter grid
-    cat_param_grid = {
-        "iterations" : [500],
-        "learning_rate" : [0.03, 0.05],
-        "depth" : [6, 8],
-        "l2_leaf_reg" : [3, 5]
-    }
-
-    # grid search
-    cat_grid_search = GridSearchCV(
-        estimator = cat_model,
-        param_grid = cat_param_grid,
-        scoring = "r2",
-        cv = 3,
-        n_jobs = -1,
-        verbose = 2,
-        error_score = "raise"
+    # CatBoost model with early stopping
+    model = CatBoostRegressor(
+        iterations=2000,
+        learning_rate=0.03,
+        depth=8,
+        l2_leaf_reg=3,
+        loss_function="RMSE",
+        random_state=42,
+        eval_metric="R2",
+        verbose=100
     )
 
     # train model
-    cat_grid_search.fit(
+    model.fit(
         X_train_cat,
         y_train,
-        cat_features = cat_feature_indices
+        cat_features=cat_feature_indices,
+        eval_set=(X_test_cat, y_test),
+        use_best_model=True,
+        early_stopping_rounds=100
     )
 
-    # best model
-    best_model = cat_grid_search.best_estimator_
-
-    print("\nBest CatBoost Parameters:")
-    print(cat_grid_search.best_params_)
+    print("\nBest iteration:", model.get_best_iteration())
 
     # predictions
-    y_pred = best_model.predict(X_test_cat)
+    y_pred = model.predict(X_test_cat)
 
     # evaluation
     cat_mae = mean_absolute_error(y_test, y_pred)
@@ -367,17 +366,17 @@ def catboost_regression_without_encoding():
     print(f"R2 Score : {cat_r2:.2f}")
 
     # save the trained model
-    save_model(best_model, "catboost_without_encoding.pkl")
+    save_model(model, "catboost_without_encoding.pkl")
 
     # update results table
     update_results(
-        "CatBoost (without encoding)",
+        "CatBoost (without encoding + route)",
         cat_mae, cat_rmse, cat_r2
     )
 
     # CatBoost Results:
-    # Mean Absolute Error: 1288.07
-    # Root Mean Squared Error: 3330.79
+    # Mean Absolute Error: 1296.84
+    # Root Mean Squared Error: 3336.20
     # R2 Score : 0.68
 
 if __name__ == "__main__":
